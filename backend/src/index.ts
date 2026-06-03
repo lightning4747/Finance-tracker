@@ -3,6 +3,8 @@ import cors from "cors";
 import * as dotenv from "dotenv";
 import setuRouter from "./routes/setu.js";
 import webhookRouter from "./webhook.js";
+import transactionsRouter from "./routes/transactions.js";
+import tagsRouter from "./routes/tags.js";
 
 dotenv.config();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 
 app.use("/api/setu", setuRouter);
 app.use("/webhook/setu", webhookRouter);
+app.use("/api/transactions", transactionsRouter);
+app.use("/api/tags", tagsRouter);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "FinTrace Backend is running" });
