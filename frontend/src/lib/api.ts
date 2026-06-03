@@ -152,23 +152,26 @@ export const api = {
   // --- Analytics ---
 
   /**
-   * Get total spend grouped by tags (excludes outliers)
+   * Get total spend grouped by tags (excludes outliers by default)
    */
-  async getSpendByTag(): Promise<SpendByTag[]> {
-    return apiRequest<SpendByTag[]>("/analytics/by-tag")
+  async getSpendByTag(includeOutliers?: boolean): Promise<SpendByTag[]> {
+    const query = includeOutliers ? "?includeOutliers=true" : ""
+    return apiRequest<SpendByTag[]>(`/analytics/by-tag${query}`)
   },
 
   /**
-   * Get monthly spend and income summaries
+   * Get monthly spend and income summaries (excludes outliers by default)
    */
-  async getMonthlySummary(): Promise<MonthlySummary[]> {
-    return apiRequest<MonthlySummary[]>("/analytics/monthly")
+  async getMonthlySummary(includeOutliers?: boolean): Promise<MonthlySummary[]> {
+    const query = includeOutliers ? "?includeOutliers=true" : ""
+    return apiRequest<MonthlySummary[]>(`/analytics/monthly${query}`)
   },
 
   /**
-   * Get overall stats overview (total spend, income, net balance, untagged items)
+   * Get overall stats overview (excludes outliers by default)
    */
-  async getOverview(): Promise<OverviewSummary> {
-    return apiRequest<OverviewSummary>("/analytics/overview")
+  async getOverview(includeOutliers?: boolean): Promise<OverviewSummary> {
+    const query = includeOutliers ? "?includeOutliers=true" : ""
+    return apiRequest<OverviewSummary>(`/analytics/overview${query}`)
   }
 }

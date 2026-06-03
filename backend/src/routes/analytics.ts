@@ -5,14 +5,17 @@ import { transactions } from "../db/schema.js";
 
 const router = Router();
 
-// GET /api/analytics/by-tag - Get total spending grouped by tags (excludes outliers)
+// GET /api/analytics/by-tag - Get total spending grouped by tags (excludes outliers by default)
 router.get("/by-tag", async (req, res) => {
   try {
+    const includeOutliers = req.query.includeOutliers === "true";
+    const outlierClause = includeOutliers ? sql`` : sql`AND transactions.is_outlier = 0`;
+
     // In SQLite, we join with json_each to unpack the tags array
     const query = sql`
       SELECT json_each.value AS tag, SUM(transactions.amount) AS total
       FROM transactions, json_each(transactions.tags)
-      WHERE transactions.type = 'DEBIT' AND transactions.is_outlier = 0
+      WHERE transactions.type = 'DEBIT' ${outlierClause}
       GROUP BY tag
       ORDER BY total DESC
     `;
@@ -31,15 +34,18 @@ router.get("/by-tag", async (req, res) => {
   }
 });
 
-// GET /api/analytics/monthly - Get monthly spend and income summaries (excludes outliers)
+// GET /api/analytics/monthly - Get monthly spend and income summaries (excludes outliers by default)
 router.get("/monthly", async (req, res) => {
   try {
+    const includeOutliers = req.query.includeOutliers === "true";
+    const outlierClause = includeOutliers ? sql`` : sql`WHERE is_outlier = 0`;
+
     const query = sql`
       SELECT strftime('%Y-%m', timestamp) AS month,
              SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) AS spent,
              SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) AS income
       FROM transactions
-      WHERE is_outlier = 0
+      ${outlierClause}
       GROUP BY month
       ORDER BY month ASC
     `;
@@ -62,13 +68,17 @@ router.get("/monthly", async (req, res) => {
 // GET /api/analytics/overview - Get overall stats overview (spend, income, net, top tag, untagged count)
 router.get("/overview", async (req, res) => {
   try {
+    const includeOutliers = req.query.includeOutliers === "true";
+    const outlierClause = includeOutliers ? sql`` : sql`WHERE is_outlier = 0`;
+    const topTagOutlierFilter = includeOutliers ? sql`` : sql`AND transactions.is_outlier = 0`;
+
     // 1. Get totals
     const totalsQuery = sql`
       SELECT 
         SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) AS totalSpend,
         SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) AS totalIncome
       FROM transactions
-      WHERE is_outlier = 0
+      ${outlierClause}
     `;
     const totalsResult = await db.all(totalsQuery) as any[];
     const totalSpend = Number(totalsResult[0]?.totalSpend || 0);
@@ -79,7 +89,7 @@ router.get("/overview", async (req, res) => {
     const topTagQuery = sql`
       SELECT json_each.value AS tag, SUM(transactions.amount) AS total
       FROM transactions, json_each(transactions.tags)
-      WHERE transactions.type = 'DEBIT' AND transactions.is_outlier = 0
+      WHERE transactions.type = 'DEBIT' ${topTagOutlierFilter}
       GROUP BY tag
       ORDER BY total DESC
       LIMIT 1
