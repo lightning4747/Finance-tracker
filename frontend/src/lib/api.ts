@@ -20,24 +20,31 @@ async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
     ...(options?.headers || {}),
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  })
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    })
 
-  if (!response.ok) {
-    let errorMessage = "An error occurred during the API request"
-    try {
-      const errorData = await response.json()
-      errorMessage = errorData.error || errorMessage
-    } catch {
-      // JSON parsing failed, use status text
-      errorMessage = response.statusText || errorMessage
+    if (!response.ok) {
+      let errorMessage = "An error occurred during the API request"
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorMessage
+      } catch {
+        // JSON parsing failed, use status text
+        errorMessage = response.statusText || errorMessage
+      }
+      throw new Error(errorMessage)
     }
-    throw new Error(errorMessage)
-  }
 
-  return response.json() as Promise<T>
+    return response.json() as Promise<T>
+  } catch (err: any) {
+    if (err.message === "Failed to fetch" || err.name === "TypeError") {
+      throw new Error("Cannot connect to the backend server. Please verify the server is running on http://localhost:4000.")
+    }
+    throw err
+  }
 }
 
 export const api = {

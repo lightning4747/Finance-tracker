@@ -421,9 +421,26 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="pt-2">
             {loading ? (
-              <div className="h-[300px] flex flex-col items-center justify-center space-y-4">
-                <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-                <span className="text-xs font-semibold text-slate-400">Rendering chart assets...</span>
+              <div className="h-[300px] flex flex-col justify-end space-y-4 px-2 py-4 animate-pulse">
+                <div className="flex justify-between items-end h-[220px] w-full gap-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <div className="flex gap-2 w-full h-full items-end justify-center">
+                    <div className="bg-slate-250 dark:bg-slate-800 rounded-t w-1/4 h-[40%]" />
+                    <div className="bg-slate-150 dark:bg-slate-850 rounded-t w-1/4 h-[75%]" />
+                  </div>
+                  <div className="flex gap-2 w-full h-full items-end justify-center">
+                    <div className="bg-slate-250 dark:bg-slate-800 rounded-t w-1/4 h-[60%]" />
+                    <div className="bg-slate-150 dark:bg-slate-850 rounded-t w-1/4 h-[45%]" />
+                  </div>
+                  <div className="flex gap-2 w-full h-full items-end justify-center">
+                    <div className="bg-slate-250 dark:bg-slate-800 rounded-t w-1/4 h-[85%]" />
+                    <div className="bg-slate-150 dark:bg-slate-850 rounded-t w-1/4 h-[30%]" />
+                  </div>
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-350 px-6">
+                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-12" />
+                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-12" />
+                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-12" />
+                </div>
               </div>
             ) : isDataEmpty || barData.length === 0 ? (
               <div className="h-[300px] flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl m-2 bg-slate-50/50 dark:bg-slate-900/20 text-center px-4">
@@ -513,9 +530,26 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="pt-2">
             {loading ? (
-              <div className="h-[300px] flex flex-col items-center justify-center space-y-4">
-                <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-                <span className="text-xs font-semibold text-slate-400">Arranging distribution details...</span>
+              <div className="h-[300px] flex flex-col items-center justify-center space-y-6 animate-pulse pt-2">
+                <div className="relative w-32 h-32 rounded-full border-[14px] border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900 rounded-full" />
+                </div>
+                <div className="w-full space-y-2.5 px-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+                    </div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-8" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+                    </div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-10" />
+                  </div>
+                </div>
               </div>
             ) : pieData.length === 0 ? (
               <div className="h-[300px] flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl m-2 bg-slate-50/50 dark:bg-slate-900/20 text-center px-4">

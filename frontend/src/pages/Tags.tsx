@@ -154,8 +154,22 @@ export default function Tags() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="h-64 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                  Loading tags...
+                <div className="grid gap-3 sm:grid-cols-2 animate-pulse">
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-805 rounded-2xl"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-3.5 h-3.5 rounded-full bg-slate-200 dark:bg-slate-800" />
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+                          <div className="h-3 bg-slate-100 dark:bg-slate-850 rounded w-8" />
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-805" />
+                    </div>
+                  ))}
                 </div>
               ) : error ? (
                 <div className="h-64 flex flex-col items-center justify-center text-red-500 gap-2">
