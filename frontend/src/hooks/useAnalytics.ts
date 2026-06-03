@@ -4,6 +4,7 @@ import type { OverviewSummary, SpendByTag, MonthlySummary } from "../lib/types"
 
 export function useAnalytics() {
   const [includeOutliers, setIncludeOutliers] = useState(false)
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [overview, setOverview] = useState<OverviewSummary | null>(null)
   const [spendByTag, setSpendByTag] = useState<SpendByTag[]>([])
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary[]>([])
@@ -14,10 +15,15 @@ export function useAnalytics() {
     setLoading(true)
     setError(null)
     try {
+      const filters = {
+        includeOutliers,
+        startDate: dateRange.start || undefined,
+        endDate: dateRange.end || undefined,
+      }
       const [overviewData, spendData, monthlyData] = await Promise.all([
-        api.getOverview(includeOutliers),
-        api.getSpendByTag(includeOutliers),
-        api.getMonthlySummary(includeOutliers),
+        api.getOverview(filters),
+        api.getSpendByTag(filters),
+        api.getMonthlySummary(filters),
       ])
       setOverview(overviewData)
       setSpendByTag(spendData)
@@ -28,7 +34,7 @@ export function useAnalytics() {
     } finally {
       setLoading(false)
     }
-  }, [includeOutliers])
+  }, [includeOutliers, dateRange])
 
   useEffect(() => {
     fetchAnalytics()
@@ -37,6 +43,8 @@ export function useAnalytics() {
   return {
     includeOutliers,
     setIncludeOutliers,
+    dateRange,
+    setDateRange,
     overview,
     spendByTag,
     monthlySummary,

@@ -14,6 +14,8 @@ import {
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useAnalytics } from "../hooks/useAnalytics"
 import { useTags } from "../hooks/useTags"
 
@@ -107,6 +109,8 @@ export default function Dashboard() {
   const {
     includeOutliers,
     setIncludeOutliers,
+    dateRange,
+    setDateRange,
     overview,
     spendByTag,
     monthlySummary,
@@ -186,6 +190,40 @@ export default function Dashboard() {
             <RefreshCw className={`w-4 h-4 text-slate-500 ${loading ? "animate-spin text-primary" : ""}`} />
           </Button>
         </div>
+      </div>
+
+      {/* Date Filters Bar */}
+      <div className="grid gap-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-end">
+        <div className="space-y-1.5">
+          <Label htmlFor="dashboard-start-date" className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Start Date</Label>
+          <Input
+            id="dashboard-start-date"
+            type="date"
+            className="w-full text-xs h-9 rounded-xl"
+            value={dateRange.start}
+            onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="dashboard-end-date" className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">End Date</Label>
+          <Input
+            id="dashboard-end-date"
+            type="date"
+            className="w-full text-xs h-9 rounded-xl"
+            value={dateRange.end}
+            onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
+          />
+        </div>
+        {(dateRange.start || dateRange.end) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setDateRange({ start: "", end: "" })}
+            className="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 h-9 rounded-xl justify-start px-3"
+          >
+            Clear Date Filters
+          </Button>
+        )}
       </div>
 
       {error && (

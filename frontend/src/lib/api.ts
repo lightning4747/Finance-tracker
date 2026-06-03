@@ -154,24 +154,42 @@ export const api = {
   /**
    * Get total spend grouped by tags (excludes outliers by default)
    */
-  async getSpendByTag(includeOutliers?: boolean): Promise<SpendByTag[]> {
-    const query = includeOutliers ? "?includeOutliers=true" : ""
-    return apiRequest<SpendByTag[]>(`/analytics/by-tag${query}`)
+  async getSpendByTag(filters?: { includeOutliers?: boolean; startDate?: string; endDate?: string }): Promise<SpendByTag[]> {
+    const params = new URLSearchParams()
+    if (filters) {
+      if (filters.includeOutliers) params.append("includeOutliers", "true")
+      if (filters.startDate) params.append("startDate", filters.startDate)
+      if (filters.endDate) params.append("endDate", filters.endDate)
+    }
+    const query = params.toString()
+    return apiRequest<SpendByTag[]>(`/analytics/by-tag${query ? `?${query}` : ""}`)
   },
 
   /**
    * Get monthly spend and income summaries (excludes outliers by default)
    */
-  async getMonthlySummary(includeOutliers?: boolean): Promise<MonthlySummary[]> {
-    const query = includeOutliers ? "?includeOutliers=true" : ""
-    return apiRequest<MonthlySummary[]>(`/analytics/monthly${query}`)
+  async getMonthlySummary(filters?: { includeOutliers?: boolean; startDate?: string; endDate?: string }): Promise<MonthlySummary[]> {
+    const params = new URLSearchParams()
+    if (filters) {
+      if (filters.includeOutliers) params.append("includeOutliers", "true")
+      if (filters.startDate) params.append("startDate", filters.startDate)
+      if (filters.endDate) params.append("endDate", filters.endDate)
+    }
+    const query = params.toString()
+    return apiRequest<MonthlySummary[]>(`/analytics/monthly${query ? `?${query}` : ""}`)
   },
 
   /**
    * Get overall stats overview (excludes outliers by default)
    */
-  async getOverview(includeOutliers?: boolean): Promise<OverviewSummary> {
-    const query = includeOutliers ? "?includeOutliers=true" : ""
-    return apiRequest<OverviewSummary>(`/analytics/overview${query}`)
+  async getOverview(filters?: { includeOutliers?: boolean; startDate?: string; endDate?: string }): Promise<OverviewSummary> {
+    const params = new URLSearchParams()
+    if (filters) {
+      if (filters.includeOutliers) params.append("includeOutliers", "true")
+      if (filters.startDate) params.append("startDate", filters.startDate)
+      if (filters.endDate) params.append("endDate", filters.endDate)
+    }
+    const query = params.toString()
+    return apiRequest<OverviewSummary>(`/analytics/overview${query ? `?${query}` : ""}`)
   }
 }

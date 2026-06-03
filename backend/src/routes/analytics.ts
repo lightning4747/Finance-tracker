@@ -9,13 +9,30 @@ const router = Router();
 router.get("/by-tag", async (req, res) => {
   try {
     const includeOutliers = req.query.includeOutliers === "true";
-    const outlierClause = includeOutliers ? sql`` : sql`AND transactions.is_outlier = 0`;
+    const { startDate, endDate } = req.query;
+
+    const conditions = [sql`transactions.type = 'DEBIT'`];
+    if (!includeOutliers) {
+      conditions.push(sql`transactions.is_outlier = 0`);
+    }
+    if (startDate) {
+      conditions.push(sql`transactions.value_date >= ${startDate as string}`);
+    }
+    if (endDate) {
+      conditions.push(sql`transactions.value_date <= ${endDate as string}`);
+    }
+
+    const whereClause = sql`WHERE ${conditions[0]}`;
+    let composedWhere = whereClause;
+    for (let i = 1; i < conditions.length; i++) {
+      composedWhere = sql`${composedWhere} AND ${conditions[i]}`;
+    }
 
     // In SQLite, we join with json_each to unpack the tags array
     const query = sql`
       SELECT json_each.value AS tag, SUM(transactions.amount) AS total
       FROM transactions, json_each(transactions.tags)
-      WHERE transactions.type = 'DEBIT' ${outlierClause}
+      ${composedWhere}
       GROUP BY tag
       ORDER BY total DESC
     `;
@@ -38,14 +55,33 @@ router.get("/by-tag", async (req, res) => {
 router.get("/monthly", async (req, res) => {
   try {
     const includeOutliers = req.query.includeOutliers === "true";
-    const outlierClause = includeOutliers ? sql`` : sql`WHERE is_outlier = 0`;
+    const { startDate, endDate } = req.query;
+
+    const conditions = [];
+    if (!includeOutliers) {
+      conditions.push(sql`is_outlier = 0`);
+    }
+    if (startDate) {
+      conditions.push(sql`value_date >= ${startDate as string}`);
+    }
+    if (endDate) {
+      conditions.push(sql`value_date <= ${endDate as string}`);
+    }
+
+    let whereClause = sql``;
+    if (conditions.length > 0) {
+      whereClause = sql`WHERE ${conditions[0]}`;
+      for (let i = 1; i < conditions.length; i++) {
+        whereClause = sql`${whereClause} AND ${conditions[i]}`;
+      }
+    }
 
     const query = sql`
       SELECT strftime('%Y-%m', timestamp) AS month,
              SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) AS spent,
              SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) AS income
       FROM transactions
-      ${outlierClause}
+      ${whereClause}
       GROUP BY month
       ORDER BY month ASC
     `;
@@ -69,8 +105,58 @@ router.get("/monthly", async (req, res) => {
 router.get("/overview", async (req, res) => {
   try {
     const includeOutliers = req.query.includeOutliers === "true";
-    const outlierClause = includeOutliers ? sql`` : sql`WHERE is_outlier = 0`;
-    const topTagOutlierFilter = includeOutliers ? sql`` : sql`AND transactions.is_outlier = 0`;
+    const { startDate, endDate } = req.query;
+
+    // Build main where condition for totals
+    const mainConditions = [];
+    if (!includeOutliers) {
+      mainConditions.push(sql`is_outlier = 0`);
+    }
+    if (startDate) {
+      mainConditions.push(sql`value_date >= ${startDate as string}`);
+    }
+    if (endDate) {
+      mainConditions.push(sql`value_date <= ${endDate as string}`);
+    }
+
+    let mainWhere = sql``;
+    if (mainConditions.length > 0) {
+      mainWhere = sql`WHERE ${mainConditions[0]}`;
+      for (let i = 1; i < mainConditions.length; i++) {
+        mainWhere = sql`${mainWhere} AND ${mainConditions[i]}`;
+      }
+    }
+
+    // Build conditions for top-tag query (which joins with json_each)
+    const topTagConditions = [sql`transactions.type = 'DEBIT'`];
+    if (!includeOutliers) {
+      topTagConditions.push(sql`transactions.is_outlier = 0`);
+    }
+    if (startDate) {
+      topTagConditions.push(sql`transactions.value_date >= ${startDate as string}`);
+    }
+    if (endDate) {
+      topTagConditions.push(sql`transactions.value_date <= ${endDate as string}`);
+    }
+
+    let topTagWhere = sql`WHERE ${topTagConditions[0]}`;
+    for (let i = 1; i < topTagConditions.length; i++) {
+      topTagWhere = sql`${topTagWhere} AND ${topTagConditions[i]}`;
+    }
+
+    // Build conditions for untagged count
+    const untaggedConditions = [sql`json_array_length(tags) = 0`];
+    if (startDate) {
+      untaggedConditions.push(sql`value_date >= ${startDate as string}`);
+    }
+    if (endDate) {
+      untaggedConditions.push(sql`value_date <= ${endDate as string}`);
+    }
+
+    let untaggedWhere = sql`WHERE ${untaggedConditions[0]}`;
+    for (let i = 1; i < untaggedConditions.length; i++) {
+      untaggedWhere = sql`${untaggedWhere} AND ${untaggedConditions[i]}`;
+    }
 
     // 1. Get totals
     const totalsQuery = sql`
@@ -78,7 +164,7 @@ router.get("/overview", async (req, res) => {
         SUM(CASE WHEN type = 'DEBIT' THEN amount ELSE 0 END) AS totalSpend,
         SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END) AS totalIncome
       FROM transactions
-      ${outlierClause}
+      ${mainWhere}
     `;
     const totalsResult = await db.all(totalsQuery) as any[];
     const totalSpend = Number(totalsResult[0]?.totalSpend || 0);
@@ -89,7 +175,7 @@ router.get("/overview", async (req, res) => {
     const topTagQuery = sql`
       SELECT json_each.value AS tag, SUM(transactions.amount) AS total
       FROM transactions, json_each(transactions.tags)
-      WHERE transactions.type = 'DEBIT' ${topTagOutlierFilter}
+      ${topTagWhere}
       GROUP BY tag
       ORDER BY total DESC
       LIMIT 1
@@ -101,7 +187,7 @@ router.get("/overview", async (req, res) => {
     const untaggedQuery = sql`
       SELECT COUNT(*) AS count
       FROM transactions
-      WHERE json_array_length(tags) = 0
+      ${untaggedWhere}
     `;
     const untaggedResult = await db.all(untaggedQuery) as any[];
     const untaggedCount = Number(untaggedResult[0]?.count || 0);
