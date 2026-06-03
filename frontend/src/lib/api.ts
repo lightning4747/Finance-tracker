@@ -1,0 +1,174 @@
+import type {
+  Transaction,
+  Tag,
+  ConsentResponse,
+  SpendByTag,
+  MonthlySummary,
+  OverviewSummary
+} from "./types"
+
+const API_BASE = "http://localhost:4000/api"
+
+/**
+ * Helper to perform fetch requests with error handling
+ */
+async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const url = `${API_BASE}${path}`
+  
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options?.headers || {}),
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  })
+
+  if (!response.ok) {
+    let errorMessage = "An error occurred during the API request"
+    try {
+      const errorData = await response.json()
+      errorMessage = errorData.error || errorMessage
+    } catch {
+      // JSON parsing failed, use status text
+      errorMessage = response.statusText || errorMessage
+    }
+    throw new Error(errorMessage)
+  }
+
+  return response.json() as Promise<T>
+}
+
+export const api = {
+  // --- Transactions ---
+  
+  /**
+   * Fetch all transactions matching filter parameters
+   */
+  async getTransactions(filters?: {
+    startDate?: string
+    endDate?: string
+    type?: "DEBIT" | "CREDIT"
+    tag?: string
+    isOutlier?: boolean
+  }): Promise<Transaction[]> {
+    const params = new URLSearchParams()
+    if (filters) {
+      if (filters.startDate) params.append("startDate", filters.startDate)
+      if (filters.endDate) params.append("endDate", filters.endDate)
+      if (filters.type) params.append("type", filters.type)
+      if (filters.tag) params.append("tag", filters.tag)
+      if (filters.isOutlier !== undefined) params.append("isOutlier", String(filters.isOutlier))
+    }
+    const query = params.toString()
+    return apiRequest<Transaction[]>(`/transactions${query ? `?${query}` : ""}`)
+  },
+
+  /**
+   * Fetch untagged transactions (empty tags array)
+   */
+  async getUntaggedTransactions(): Promise<Transaction[]> {
+    return apiRequest<Transaction[]>("/transactions/untagged")
+  },
+
+  /**
+   * Update transaction tags
+   */
+  async updateTransactionTags(id: string, tags: string[]): Promise<Transaction> {
+    return apiRequest<Transaction>(`/transactions/${id}/tags`, {
+      method: "PATCH",
+      body: JSON.stringify({ tags }),
+    })
+  },
+
+  /**
+   * Toggle outlier status on a transaction
+   */
+  async toggleTransactionOutlier(id: string, isOutlier: boolean): Promise<Transaction> {
+    return apiRequest<Transaction>(`/transactions/${id}/outlier`, {
+      method: "PATCH",
+      body: JSON.stringify({ isOutlier }),
+    })
+  },
+
+  // --- Tags ---
+
+  /**
+   * Fetch all tags
+   */
+  async getTags(): Promise<Tag[]> {
+    return apiRequest<Tag[]>("/tags")
+  },
+
+  /**
+   * Create a new custom tag
+   */
+  async createTag(name: string, color?: string): Promise<Tag> {
+    return apiRequest<Tag>("/tags", {
+      method: "POST",
+      body: JSON.stringify({ name, color }),
+    })
+  },
+
+  /**
+   * Delete tag by ID
+   */
+  async deleteTag(id: string): Promise<{ success: boolean; message: string }> {
+    return apiRequest<{ success: boolean; message: string }>(`/tags/${id}`, {
+      method: "DELETE",
+    })
+  },
+
+  // --- Setu AA Integration ---
+
+  /**
+   * Initiate consent flow for a VUA
+   */
+  async createConsent(vua: string): Promise<ConsentResponse> {
+    return apiRequest<ConsentResponse>("/setu/consent", {
+      method: "POST",
+      body: JSON.stringify({ vua }),
+    })
+  },
+
+  /**
+   * Check consent approval status
+   */
+  async getConsentStatus(id: string): Promise<{ id: string; status: string }> {
+    return apiRequest<{ id: string; status: string }>(`/setu/consent/${id}`)
+  },
+
+  /**
+   * Manually trigger data session and fetch transactions
+   */
+  async triggerFetch(consentId: string): Promise<{ session: { id: string }; data: any }> {
+    return apiRequest<{ session: { id: string }; data: any }>("/setu/fetch", {
+      method: "POST",
+      body: JSON.stringify({ consentId }),
+    })
+  },
+
+  // --- Analytics ---
+
+  /**
+   * Get total spend grouped by tags (excludes outliers)
+   */
+  async getSpendByTag(): Promise<SpendByTag[]> {
+    return apiRequest<SpendByTag[]>("/analytics/by-tag")
+  },
+
+  /**
+   * Get monthly spend and income summaries
+   */
+  async getMonthlySummary(): Promise<MonthlySummary[]> {
+    return apiRequest<MonthlySummary[]>("/analytics/monthly")
+  },
+
+  /**
+   * Get overall stats overview (total spend, income, net balance, untagged items)
+   */
+  async getOverview(): Promise<OverviewSummary> {
+    return apiRequest<OverviewSummary>("/analytics/overview")
+  }
+}
