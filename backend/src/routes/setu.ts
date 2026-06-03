@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { SetuClient } from "../services/setuClient.js";
+import { transformAndPersist } from "../services/transform.js";
 
 const router = Router();
 const setuClient = new SetuClient();
@@ -43,9 +44,14 @@ router.post("/fetch", async (req, res) => {
     // Retrieve session data (in production this would wait for Setu's webhook, but for mocking we fetch directly)
     const sessionData = await setuClient.fetchSessionData(session.id);
     
+    // Persist transactions to database
+    const persistResult = await transformAndPersist(sessionData);
+    
     return res.json({
       session,
-      data: sessionData
+      data: sessionData,
+      insertedTransactionsCount: persistResult.insertedTransactionsCount,
+      accountsProcessed: persistResult.accountsProcessed
     });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || "Failed to fetch session data" });

@@ -142,8 +142,8 @@ export const api = {
   /**
    * Manually trigger data session and fetch transactions
    */
-  async triggerFetch(consentId: string): Promise<{ session: { id: string }; data: any }> {
-    return apiRequest<{ session: { id: string }; data: any }>("/setu/fetch", {
+  async triggerFetch(consentId: string): Promise<{ session: { id: string }; data: any; insertedTransactionsCount?: number; accountsProcessed?: number }> {
+    return apiRequest<{ session: { id: string }; data: any; insertedTransactionsCount?: number; accountsProcessed?: number }>("/setu/fetch", {
       method: "POST",
       body: JSON.stringify({ consentId }),
     })
