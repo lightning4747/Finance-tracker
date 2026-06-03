@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { SetuClient } from "./services/setuClient.js";
+import { transformAndPersist } from "./services/transform.js";
 
 const router = Router();
 const setuClient = new SetuClient();
@@ -26,7 +27,8 @@ router.post("/", async (req, res) => {
           console.log(`[Webhook] Retrieved data for ${sessionData.data.length} FIP account(s).`);
         }
         
-        // TODO (Phase 1, Task 5): Call transform layer to parse and save transactions in SQLite
+        const result = await transformAndPersist(sessionData);
+        console.log(`[Webhook] DB Import Success: Processed ${result.accountsProcessed} accounts, inserted ${result.insertedTransactionsCount} new transactions.`);
       }
     } else {
       // Consent status update
@@ -48,6 +50,8 @@ router.post("/", async (req, res) => {
             try {
               const sessionData = await setuClient.fetchSessionData(sessionResponse.id);
               console.log(`[Webhook] [MOCK] Successfully fetched session data. FIP accounts: ${sessionData.data?.length}`);
+              const result = await transformAndPersist(sessionData);
+              console.log(`[Webhook] [MOCK] DB Import Success: Processed ${result.accountsProcessed} accounts, inserted ${result.insertedTransactionsCount} new transactions.`);
             } catch (err: any) {
               console.error("[Webhook] [MOCK] Error fetching simulated session data:", err.message);
             }
