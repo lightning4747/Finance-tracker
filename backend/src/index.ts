@@ -5,6 +5,7 @@ import setuRouter from "./routes/setu.js";
 import webhookRouter from "./webhook.js";
 import transactionsRouter from "./routes/transactions.js";
 import tagsRouter from "./routes/tags.js";
+import analyticsRouter from "./routes/analytics.js";
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use("/api/setu", setuRouter);
 app.use("/webhook/setu", webhookRouter);
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/tags", tagsRouter);
+app.use("/api/analytics", analyticsRouter);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "FinTrace Backend is running" });
