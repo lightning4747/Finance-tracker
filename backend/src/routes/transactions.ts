@@ -38,9 +38,13 @@ router.get("/", async (req, res) => {
 
     // Filter by tag in SQLite JSON array
     if (tag) {
-      conditions.push(
-        sql`exists (select 1 from json_each(${transactions.tags}) where json_each.value = ${tag as string})`
-      );
+      if (tag === "UNTAGGED") {
+        conditions.push(sql`json_array_length(${transactions.tags}) = 0`);
+      } else {
+        conditions.push(
+          sql`exists (select 1 from json_each(${transactions.tags}) where json_each.value = ${tag as string})`
+        );
+      }
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

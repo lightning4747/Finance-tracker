@@ -350,7 +350,7 @@ export default function Dashboard() {
                 </div>
                 {overview.untaggedCount > 0 ? (
                   <Link 
-                    to="/transactions?filterTag=Untagged"
+                    to="/transactions?filterTag=UNTAGGED"
                     className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold mt-1 flex items-center gap-0.5 group/link"
                   >
                     Categorize transactions
